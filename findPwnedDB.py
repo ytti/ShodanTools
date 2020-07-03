@@ -28,16 +28,7 @@ from sys import argv
 import json
 from shodan.helpers import iterate_files, get_ip
 
-pwnedDBs = ['university_cybersec_experiment', 'alpine', 'How_to_restore', 'pocosow/centos:7.6.1810', 'docker.io/pocosow/centos:7.6.1810', 'hacked_by_unistellar', 'RECOVERY', 'timonmat/xmr-stak-cpu', 'arayan/monero-miner', 
-'abafaeeee/monero-miner', 'docker.io/gakeaws/nginx:v2.0', 'gakeaws/nginx:v2.0', 'docker.io/gakeaws/mysql:5.6', 'gakeaws/mysql:5.6', 'docker.io/gakeaws/nginx:v8.9', 'gakeaws/nginx:v8.9',
-'kannix/monero-miner', 'Warn', 'Backup1', 'Backup2', 'Backup3', 'crackit', 'trojan1', 'trojan2', 'trojan3', 'trojan4', 'Readme', 'WARNING', 'RECOVER', 
-'PLEASE_READ_ME_XYZ', 'jacpos', 'jackpos', 'jackposv1', 'jackposv2', 'jackposprivate12', 'alina', 'topkek112', 'README', 'WRITE_ME', 'HACKED_BY_MARSHY', 'PLEASE_README',
-'WE_HAVE_YOUR_DATA', 'your_data_has_been_backed_up', 'REQUEST_YOUR_DATA', 'DB_HAS_BEEN_DROPPED', 'Warning', 'Attention', 'Aa1_Where_is_my_data', 
-'send_bitcoin_to_retrieve_the_data', 'DATA_HAS_BEEN_BACKED_UP', 'REQUEST_ME', 'CONTACTME', 'BACKUP_DB', 'db_has_been_backed_up', 
-'PLEASE_READ', 'please_read', 'warning', 'DB_H4CK3D', 'CONTACTME', 'PLEASE_READ_ME', 'DB_DELETED', 'DB_DROPPED', 'PLEASEREAD', 'How_to_restore', 
-'NODATA4U_SECUREYOURSHIT', 'SECUREYOURSHIT', 'pleasereadthis', 'readme', 'PLEASE_SECURE_THIS_INSTALLATION', 'ReadmePlease', 'how_to_recover',
-'JUST_READ_ME', 'README_MISSING_DATABASES', 'README_YOU_DB_IS_INSECURE', 'PWNED_SECURE_YOUR_STUFF_SILLY', 'WARNING_ALERT', 'Warn',
-'pleaseread']
+pwnedDBs = {'Attention', 'Backup1', 'trojan4', 'DB_HAS_BEEN_DROPPED', 'README_MISSING_DATABASES', 'README_YOU_DB_IS_INSECURE', 'abafaeeee/monero-miner', 'topkek112', 'your_data_has_been_backed_up', 'README', 'Backup2', 'crackit', 'docker.io/pocosow/centos:7.6.1810', 'How_to_restore', 'gakeaws/nginx:v8.9', 'jackposv2', 'ReadmePlease', 'WARNING_ALERT', 'REQUEST_YOUR_DATA', 'trojan3', 'docker.io/gakeaws/nginx:v8.9', 'jackposprivate12', 'JUST_READ_ME', 'DB_DELETED', 'kannix/monero-miner', 'WRITE_ME', 'pocosow/centos:7.6.1810', 'Warn', 'PLEASE_READ_ME_XYZ', 'Warning', 'PLEASE_README', 'DB_H4CK3D', 'WARNING', 'alpine', 'Readme', 'WE_HAVE_YOUR_DATA', 'readme', 'how_to_recover', 'PLEASE_READ', 'timonmat/xmr-stak-cpu', 'pleaseread', 'DB_DROPPED', 'warning', 'university_cybersec_experiment', 'PLEASE_READ_ME', 'jackposv1', 'NODATA4U_SECUREYOURSHIT', 'PLEASEREAD', 'gakeaws/nginx:v2.0', 'SECUREYOURSHIT', 'jackpos', 'trojan2', 'PLEASE_SECURE_THIS_INSTALLATION', 'trojan1', 'REQUEST_ME', 'please_read', 'DATA_HAS_BEEN_BACKED_UP', 'Aa1_Where_is_my_data', 'pleasereadthis', 'send_bitcoin_to_retrieve_the_data', 'hacked_by_unistellar', 'CONTACTME', 'RECOVER', 'db_has_been_backed_up', 'docker.io/gakeaws/nginx:v2.0', 'HACKED_BY_MARSHY', 'PWNED_SECURE_YOUR_STUFF_SILLY', 'RECOVERY', 'alina', 'docker.io/gakeaws/mysql:5.6', 'Backup3', 'gakeaws/mysql:5.6', 'jacpos', 'BACKUP_DB', 'arayan/monero-miner'}
 
 for banner in iterate_files(argv[1:]):
     ip = get_ip(banner)
@@ -47,43 +38,31 @@ for banner in iterate_files(argv[1:]):
     except:
         pass
     try:
+        key = None
         if product == "MongoDB":
             data = banner['data'].replace('MongoDB Server Information\n', '').split('\n},\n')[2]
-            data = json.loads(data + '}')
-            for db in data['databases']:
-                if db['name'] in pwnedDBs:
-                    print('{}:{}:{}:{}'.format(ip, org, db['name'], product))
+            data = json.loads(data + '}')['databases']
+            key = 'name'
         elif product == "Elastic":
-            data = banner['elastic']
-            for db in data['indices']:
-                if db in pwnedDBs:
-                    print('{}:{}:{}:{}'.format(ip, org, db, product))
+            data = banner['elastic']['indices']
         elif product == "Cassandra":
-            data = banner['cassandra']
-            for db in data['keyspaces']:
-                if db in pwnedDBs:
-                    print('{}:{}:{}:{}'.format(ip, org, db, product))
+            data = banner['cassandra']['keyspaces']
         elif product == "HDFS NameNode":
-            data = banner['opts']['hdfs-namenode']
-            for db in data['Files']:
-                if db['pathSuffix'] in pwnedDBs:
-                    print('{}:{}:{}:{}'.format(ip, org, db['pathSuffix'], product))
+            data = banner['opts']['hdfs-namenode']['Files']
+            key = 'pathSuffix'
         elif product == "CouchDB":
-            data = banner['opts']['couchdb']
-            for db in data['dbs']:
-                if db in pwnedDBs:
-                    print('{}:{}:{}:{}'.format(ip, org, db, product))
+            data = banner['opts']['couchdb']['dbs']
         elif product == "Redis key-value store":
-            data = banner['redis']['keys']
-            for db in data['data']:
-                if db in pwnedDBs:
-                    print('{}:{}:{}:{}'.format(ip, org, db, product))
+            data = banner['redis']['keys']['data']
         elif product == "Docker":
             data = banner['docker']['Containers']
-            for db in data:
-                if db['Image'] in pwnedDBs:
-                    print('{}:{}:{}:{}'.format(ip, org, db['Image'], product))
+            key = 'Image'
         else:
-            data = banner['product']
+            continue
+
+        for db in data:
+            db = db[key] if key else db
+            if db in pwnedDBs:
+               print('{}:{}:{}:{}'.format(ip, org, db, product))
     except:
         pass
